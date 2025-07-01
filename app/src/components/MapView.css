@@ -2,6 +2,7 @@
     width: 100%;
     height: 100vh;
     /* Or whatever height you need */
+    z-index: 999;
 }
 
 .map-view-wrapper {
