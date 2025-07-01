@@ -84,6 +84,8 @@ const MapView: React.FC = () => {
         total: 0
     });
 
+    // const [loadingStatus, setLoadingStatus] = useState<{ [key: number]: string }>({});
+
     const loadGISDATA = async () => {
         const layers: any = [
             {
@@ -119,11 +121,19 @@ const MapView: React.FC = () => {
                 maxzoom: 22
             },
             {
-                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 1", path: "bma_building_center.zip", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
             {
-                id: 10,
+                id: 10, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 2", path: "bma_building_north.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 11, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 3", path: "bma_building_south.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 12,
                 type: "arcgis",
                 name_en: "bma_basemap_arcgis",
                 name: "BMAGI Basemap 2564",
@@ -138,41 +148,53 @@ const MapView: React.FC = () => {
         ];
 
         setLoadingProgress({ loaded: 0, total: layers.length });
+        // setLoadingStatus({}); // reset
 
-        const loadedLayers = [];
+        const loadedLayers: any[] = [];
 
         for (const [index, layer] of layers.entries()) {
-            let geojson = null;
+            // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'loading' }));
 
-            if (layer.type === "geojson") {
-                const res = await webservice.loadGeojsonFile(`/assets/geodata/${layer.path}`);
-                geojson = res.status === 200 ? res.data : null;
+            try {
+                let geojson = null;
 
-            } else if (layer.type === "csv") {
-                const res = await webservice.loadCSVFile(`/assets/geodata/${layer.path}`);
-                if (res.length > 0) {
-                    geojson = {
-                        type: "FeatureCollection",
-                        features: res.map((d: any) => ({
-                            type: "Feature",
-                            geometry: { type: "Point", coordinates: [+d.long, +d.lat] },
-                            properties: d,
-                        })),
-                    };
+                if (layer.type === "geojson") {
+                    const res = await webservice.loadGeojsonFile(`/assets/geodata/${layer.path}`);
+                    geojson = res.status === 200 ? res.data : null;
+
+                } else if (layer.type === "csv") {
+                    const res = await webservice.loadCSVFile(`/assets/geodata/${layer.path}`);
+                    if (res.length > 0) {
+                        geojson = {
+                            type: "FeatureCollection",
+                            features: res.map((d: any) => ({
+                                type: "Feature",
+                                geometry: { type: "Point", coordinates: [+d.long, +d.lat] },
+                                properties: d,
+                            })),
+                        };
+                    }
+
+                } else if (layer.type === "shp") {
+                    const res: any = await webservice.loadShapeFile(`/assets/geodata/${layer.path}`);
+                    if (res.features?.length > 0) geojson = res;
                 }
 
-            } else if (layer.type === "shp") {
-                const res: any = await webservice.loadShapeFile(`/assets/geodata/${layer.path}`);
-                if (res.features?.length > 0) geojson = res;
-            }
+                const fullLayer = { ...layer, geojson };
+                loadedLayers.push(fullLayer);
+                // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'loaded' }));
 
-            loadedLayers.push({ ...layer, geojson });
+            } catch (err) {
+                // console.error(`Failed to load ${layer.name_en}:`, err);
+                // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'error' }));
+            }
 
             setLoadingProgress({ loaded: index + 1, total: layers.length });
         }
 
         return loadedLayers;
     };
+
 
     const colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
     const getColorByIndex = (i: number) => {
@@ -304,8 +326,8 @@ const MapView: React.FC = () => {
     const addLayer = (layer: any, mapInstance: maplibregl.Map) => {
 
         if (layer.type === "arcgis") {
-            const sourceId = `${layer.name_en}_source`;
-            const layerId = `${layer.name_en}_layer`;
+            const sourceId = `${layer.name_en}_${layer.id}_source`;
+            const layerId = `${layer.name_en}_${layer.id}_layer`;
 
             if (!mapInstance.getSource(sourceId)) {
                 mapInstance.addSource(sourceId, {
@@ -336,8 +358,8 @@ const MapView: React.FC = () => {
 
         if (!layer.geojson) return;
 
-        const sourceId = `${layer.name_en}_source`;
-        const layerId = `${layer.name_en}_layer`;
+        const sourceId = `${layer.name_en}_${layer.id}_source`;
+        const layerId = `${layer.name_en}_${layer.id}_layer`;
 
         // console.log(layer.geojson);
 
@@ -463,69 +485,73 @@ const MapView: React.FC = () => {
             }
             return;
         } else if (layer.name_en === 'bma_building') {
+            const color = getColorByIndex(layer.id);
 
+            /* ---------- helper expressions ---------- */
+            // Safely pull out area_in_me as a number with default 0
+            const areaExpr: any[] = ['to-number', ['get', 'area_in_me'], 0];
+
+            // Re‑usable logic for extrusion height
+            const heightExpr: any = [
+                'case',
+                ['<', areaExpr, 200], 6,
+                ['<', areaExpr, 400], 8,
+                20
+            ];
+
+            /* ---------- main extrusion layer ---------- */
             layerConfig = {
                 id: layerId,
-                type: "fill-extrusion",
+                type: 'fill-extrusion',
                 source: sourceId,
                 minzoom: layer.minzoom ?? 0,
                 maxzoom: layer.maxzoom ?? 22,
                 paint: {
-                    'fill-extrusion-color': '#ffcc00',
-                    'fill-extrusion-height': [
-                        'case',
-                        ['<', ['get', 'area_in_me'], 200], 6,
-                        ['all', ['>=', ['get', 'area_in_me'], 200], ['<', ['get', 'area_in_me'], 400]], 8,
-                        20
-                    ],
+                    'fill-extrusion-color': color,
+                    'fill-extrusion-height': heightExpr,
                     'fill-extrusion-opacity': 0.9
                 }
-
             };
 
+            /* ---------- highlight layer (invisible until clicked) ---------- */
+            const hlId = `bma_building-highlight-${layer.id}`;
+
             map.current?.addLayer({
-                id: 'bma_building-highlight',
+                id: hlId,
                 type: 'fill-extrusion',
                 source: sourceId,
                 minzoom: layer.minzoom ?? 0,
                 maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     'fill-extrusion-color': '#ff0000',
-                    'fill-extrusion-height': [
-                        'case',
-                        ['<', ['get', 'area_in_me'], 200], 3,
-                        ['all', ['>=', ['get', 'area_in_me'], 200], ['<', ['get', 'area_in_me'], 400]], 6,
-                        10
-                    ],
+                    'fill-extrusion-height': heightExpr,
                     'fill-extrusion-opacity': 1
                 },
-                filter: ['==', 'dummy_field', 'dummy_value']
+                // Start hidden
+                filter: ['==', '___init___', 0]
             });
 
+            /* ---------- click handler ---------- */
             map.current?.on('click', layerId, (e) => {
                 const feature = e.features?.[0];
                 if (!feature) return;
 
-                const props = feature.properties;
-                const buildingId = props?.id;
+                const props = feature.properties || {};
 
+                // The ID field in your data could be id OR building_id.
+                const buildingId = props.building_id ?? props.id;
                 if (buildingId === undefined || buildingId === null) {
-                    console.warn('Clicked building has no building_id property:', props);
+                    console.warn('Clicked building has no id / building_id:', props);
                     return;
                 }
 
-                if (map.current) {
-                    map.current.setFilter('bma_building-highlight', [
-                        '==',
-                        'building_id',
-                        buildingId
-                    ]);
+                // Filter highlight layer by the **actual** field that exists in the data
+                map.current!.setFilter(hlId, ['==', props.building_id !== undefined ? 'building_id' : 'id', buildingId]);
 
-                    new maplibregl.Popup()
-                        .setLngLat(e.lngLat)
-                        .setHTML(setContent(props, layer.name_en))
-                        .addTo(map.current);
-                }
+                new maplibregl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(setContent(props, layer.name_en))
+                    .addTo(map.current!);
             });
         }
 
@@ -555,29 +581,58 @@ const MapView: React.FC = () => {
         );
     };
 
+    // ─────────────────────────────────────────────
+    // helper: re‑add every custom icon that
+    // was loaded earlier (CCTV, school, station)
+    async function replayIcons() {
+        if (!map.current) return;
+
+        await Promise.all(
+            Object.entries(loadedImages.current).map(([id, url]) =>
+                new Promise<void>((resolve, reject) => {
+                    if (map.current!.hasImage(id)) return resolve();          // sprite already has it
+
+                    map.current!.loadImage(url)
+                        .then(img => {
+                            map.current!.addImage(id, img.data as ImageBitmap, { pixelRatio: 1 });
+                            resolve();
+                        })
+                        .catch(reject);
+                }),
+            ),
+        );
+    }
+
     const handleBasemapChange = (basemapName: string) => {
         if (!map.current) return;
 
-        const basemap: any = baseMapStyles.find((b) => b.name === basemapName);
-        console.log(basemap.style);
+        const basemap: any = baseMapStyles.find(b => b.name === basemapName);
+        if (!basemap?.style) return;
 
-        if (basemap?.style) {
-            setSelectedBasemap(basemapName);
-            setMapStyle(basemap.style);
+        setSelectedBasemap(basemapName);
+        setMapStyle(basemap.style);
 
-            map.current.setStyle(basemap.style);
-            // console.log(map.current);
+        // 1️⃣ Switch style
+        map.current.setStyle(basemap.style);
 
+        // 2️⃣ Wait until the map is **idle** (all style + sprite + glyph +
+        //    tiles parsed). This fires once per style change.
+        map.current.once('idle', async () => {
+            // a) put back custom icons *first*
+            await replayIcons();
 
-            // map.current.on("load", () => {
-            //     GISData.forEach((layer) => {
-            //         if (layer.geojson) {
-            //             addLayer(layer, map.current!);
-            //         }
-            //     });
-            // });
-        }
+            // b) add every GIS layer again
+            GISData.forEach(layer => {
+                if (layer.geojson || layer.type === 'arcgis') {
+                    addLayer(layer, map.current!);
+                }
+            });
+
+            // c) keep your preferred drawing order
+            // reorderLayers();
+        });
     };
+
 
     function reorderLayers() {
         const desiredOrder = [
@@ -640,6 +695,9 @@ const MapView: React.FC = () => {
                                 />
                                 {layer.name}
                             </label>
+                            {/* <div style={{ fontSize: '12px', marginLeft: '10px' }}>
+                                Status: {loadingStatus[layer.id] || 'pending'}
+                            </div> */}
                         </div>
                     ))}
                 </div>
