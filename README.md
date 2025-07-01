@@ -123,3 +123,23 @@ export default App;
 
 ```
 
+4. สร้างไฟล์ webservice.service.ts 
+mkdir src/services
+touch src/services/webservice.service.ts 
+
+
+npm i axios
+
+npm i shpjs
+
+touch http-common.ts
+
+
+npm i papaparse
+
+npm install mapbox-gl
+
+mkdir src/components/pages
+
+touch src/components/MainPage.tsx
+touch src/components/MainPage.css

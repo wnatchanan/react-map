@@ -1,0 +1,12 @@
+import axios from "axios";
+
+const api_path = "http://localhost:3000";
+
+const http = axios.create({
+    baseURL: api_path,
+    headers: {
+        "Content-type": "application/json"
+    }
+});
+
+export { http };
