@@ -121,17 +121,17 @@ const MapView: React.FC = () => {
                 maxzoom: 22
             },
             {
-                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 1", path: "bma_building_center.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building_center.zip", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
-            {
-                id: 10, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 2", path: "bma_building_north.zip", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
-            {
-                id: 11, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 3", path: "bma_building_south.zip", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
+            // {
+            //     id: 10, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 2", path: "bma_building_north.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 11, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 3", path: "bma_building_south.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     maxzoom: 22
+            // },
             {
                 id: 12,
                 type: "arcgis",
