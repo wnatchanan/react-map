@@ -87,39 +87,39 @@ const MapView: React.FC = () => {
     const loadGISDATA = async () => {
         const layers: any = [
             {
-                id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, check: true, icon: null, minzoom: 10,
+                id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
                 maxzoom: 15
             },
             {
-                id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, check: true, icon: null, minzoom: 15,
+                id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
             {
-                id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, check: true, icon: null, minzoom: 15,
+                id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
             {
-                id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, check: true, icon: null, minzoom: 10,
+                id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
                 maxzoom: 15
             },
             {
-                id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, check: true, icon: '/assets/images/school.png', minzoom: 10,
+                id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, visible: true, icon: '/assets/images/school.png', minzoom: 10,
                 maxzoom: 22
             },
             {
-                id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, check: true, icon: '/assets/images/station.png', minzoom: 10,
+                id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, visible: true, icon: '/assets/images/station.png', minzoom: 10,
                 maxzoom: 22
             },
             {
-                id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, check: true, icon: '/assets/images/cctv.png', minzoom: 10,
+                id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, visible: true, icon: '/assets/images/cctv.png', minzoom: 10,
                 maxzoom: 22
             },
             {
-                id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, check: true, icon: null, minzoom: 15,
+                id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
             {
-                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, check: true, icon: null, minzoom: 15,
+                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, visible: true, icon: null, minzoom: 15,
                 maxzoom: 22
             },
             {
@@ -129,7 +129,7 @@ const MapView: React.FC = () => {
                 name: "BMAGI Basemap 2564",
                 path: "",
                 geojson: null,
-                check: false,
+                visible: false,
                 icon: null,
                 minzoom: 0,
                 maxzoom: 22,
@@ -166,7 +166,7 @@ const MapView: React.FC = () => {
                 if (res.features?.length > 0) geojson = res;
             }
 
-            loadedLayers.push({ ...layer, geojson, visible: true });
+            loadedLayers.push({ ...layer, geojson });
 
             setLoadingProgress({ loaded: index + 1, total: layers.length });
         }
