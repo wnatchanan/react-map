@@ -8,7 +8,7 @@ const baseMapStyles = [
         name: "Google Hybrid",
         style: {
             version: 8,
-            glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+            // glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
             sources: {
                 "google-hybrid": {
                     type: "raster",
@@ -74,6 +74,7 @@ const MapView: React.FC = () => {
             });
         });
 
+
         return () => mapInstance.remove();
     }, []);
 
@@ -85,15 +86,55 @@ const MapView: React.FC = () => {
 
     const loadGISDATA = async () => {
         const layers: any = [
-            { id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, check: true, icon: null },
-            { id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, check: true, icon: null },
-            { id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, check: true, icon: null },
-            { id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, check: true, icon: null },
-            { id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, check: true, icon: '/assets/images/school.png' },
-            { id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, check: true, icon: '/assets/images/station.png' },
-            { id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, check: true, icon: '/assets/images/cctv.png' },
-            { id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, check: true, icon: null },
-            { id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, check: true, icon: null },
+            {
+                id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, check: true, icon: null, minzoom: 10,
+                maxzoom: 15
+            },
+            {
+                id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, check: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, check: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, check: true, icon: null, minzoom: 10,
+                maxzoom: 15
+            },
+            {
+                id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, check: true, icon: '/assets/images/school.png', minzoom: 10,
+                maxzoom: 22
+            },
+            {
+                id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, check: true, icon: '/assets/images/station.png', minzoom: 10,
+                maxzoom: 22
+            },
+            {
+                id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, check: true, icon: '/assets/images/cctv.png', minzoom: 10,
+                maxzoom: 22
+            },
+            {
+                id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, check: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, check: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 10,
+                type: "arcgis",
+                name_en: "bma_basemap_arcgis",
+                name: "BMAGI Basemap 2564",
+                path: "",
+                geojson: null,
+                check: false,
+                icon: null,
+                minzoom: 0,
+                maxzoom: 22,
+
+            }
         ];
 
         setLoadingProgress({ loaded: 0, total: layers.length });
@@ -227,7 +268,7 @@ const MapView: React.FC = () => {
         return content
     }
 
-
+    const loadedImages = useRef<{ [key: string]: string }>({});
 
     const loadImagePopup = (data: any) => {
         map.current!.loadImage(data.iconPath)
@@ -249,6 +290,7 @@ const MapView: React.FC = () => {
                     createImageBitmap(blob).then((resizedBitmap) => {
                         if (!map.current!.hasImage(data.iconId)) {
                             map.current!.addImage(data.iconId, resizedBitmap, { pixelRatio: 1 });
+                            loadedImages.current[data.iconId] = data.iconPath;
                         }
                         addDataPopup(data);
                     });
@@ -260,6 +302,38 @@ const MapView: React.FC = () => {
     }
 
     const addLayer = (layer: any, mapInstance: maplibregl.Map) => {
+
+        if (layer.type === "arcgis") {
+            const sourceId = `${layer.name_en}_source`;
+            const layerId = `${layer.name_en}_layer`;
+
+            if (!mapInstance.getSource(sourceId)) {
+                mapInstance.addSource(sourceId, {
+                    type: "raster",
+                    tiles: [
+                        "https://cpudgiapp.bangkok.go.th/arcgis/rest/services/GI_Platform/BMAGI_Basemap_2564/MapServer/export" +
+                        "?bbox={bbox-epsg-3857}" +
+                        "&bboxSR=3857" +
+                        "&size=256,256" +
+                        "&format=png" +
+                        "&transparent=true" +
+                        "&f=image"
+                    ],
+                    tileSize: 256,
+                });
+            }
+
+            mapInstance.addLayer({
+                id: layerId,
+                type: "raster",
+                source: sourceId,
+                layout: {
+                    visibility: layer.visible ? "visible" : "none"
+                }
+            });
+            return;
+        }
+
         if (!layer.geojson) return;
 
         const sourceId = `${layer.name_en}_source`;
@@ -277,6 +351,8 @@ const MapView: React.FC = () => {
             id: layerId,
             type: "fill",
             source: sourceId,
+            minzoom: layer.minzoom ?? 0,
+            maxzoom: layer.maxzoom ?? 22,
             paint: {
                 "fill-color": "#ff0000",
                 "fill-opacity": 0.5,
@@ -284,6 +360,7 @@ const MapView: React.FC = () => {
             layout: {
                 visibility: layer.visible ? "visible" : "none",
             },
+
         };
 
         if (layer.name_en === 'district') {
@@ -291,6 +368,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "line",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: { 'line-color': '#f391d6', 'line-width': 10 }
             };
         } else if (layer.name_en === "road") {
@@ -298,6 +377,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "line",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     "line-color": "#ffe53d",
                     "line-width": 3,
@@ -308,6 +389,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "line",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     'line-color': '#ffa200',
                     'line-width': 5
@@ -342,6 +425,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "fill",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     'fill-color': colorExpression,
                     'fill-opacity': 0.25,
@@ -353,6 +438,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "fill",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: { 'fill-color': '#b3ff80', 'fill-opacity': 1 }
             };
         } else if (layer.name_en === "bma_cctv" || layer.name_en === "air_pollution" || layer.name_en === "bma_school") {
@@ -366,6 +453,8 @@ const MapView: React.FC = () => {
                     id: layerId,
                     type: "symbol",
                     source: sourceId,
+                    minzoom: layer.minzoom ?? 0,
+                    maxzoom: layer.maxzoom ?? 22,
                     layout: {
                         "icon-image": iconId,
                         "icon-size": 0.5,
@@ -379,6 +468,8 @@ const MapView: React.FC = () => {
                 id: layerId,
                 type: "fill-extrusion",
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     'fill-extrusion-color': '#ffcc00',
                     'fill-extrusion-height': [
@@ -396,6 +487,8 @@ const MapView: React.FC = () => {
                 id: 'bma_building-highlight',
                 type: 'fill-extrusion',
                 source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
                 paint: {
                     'fill-extrusion-color': '#ff0000',
                     'fill-extrusion-height': [
@@ -436,6 +529,7 @@ const MapView: React.FC = () => {
             });
         }
 
+
         mapInstance.addLayer(layerConfig);
 
 
@@ -465,22 +559,51 @@ const MapView: React.FC = () => {
         if (!map.current) return;
 
         const basemap: any = baseMapStyles.find((b) => b.name === basemapName);
+        console.log(basemap.style);
+
         if (basemap?.style) {
             setSelectedBasemap(basemapName);
-            setMapStyle(basemap.style)
+            setMapStyle(basemap.style);
+
             map.current.setStyle(basemap.style);
+            // console.log(map.current);
 
-            map.current.once("style.load", () => {
-                GISData.forEach((layer) => {
-                    console.log(layer.geojson);
 
-                    if (layer.geojson) {
-                        addLayer(layer, map.current!);
-                    }
-                });
-            });
+            // map.current.on("load", () => {
+            //     GISData.forEach((layer) => {
+            //         if (layer.geojson) {
+            //             addLayer(layer, map.current!);
+            //         }
+            //     });
+            // });
         }
     };
+
+    function reorderLayers() {
+        const desiredOrder = [
+            'district_layer',
+            'road_layer',
+            'bike_way_layer',
+            'bma_zone_layer',
+            'bma_cctv_layer',
+            'bma_school_layer',
+            'air_pollution_layer'
+        ];
+
+        let previousLayerId = null;
+
+        for (let i = desiredOrder.length - 1; i >= 0; i--) {
+            const layerId = desiredOrder[i];
+            if (map.current?.getLayer(layerId)) {
+                map.current.moveLayer(layerId, previousLayerId || undefined);
+                previousLayerId = layerId;
+            }
+        }
+    }
+
+
+
+
     return (
         <div className="map-view-wrapper" style={{ display: "flex" }}>
             <div
