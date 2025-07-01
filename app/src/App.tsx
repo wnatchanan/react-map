@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import MapView from './components/MapView';
 import MainPage from "./components/pages/MainPage";
+import './index.css'
 
 function App() {
   return (

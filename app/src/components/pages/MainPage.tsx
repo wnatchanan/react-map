@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './MainPage.css';
+import MapView from '../MapView';
 
 const MainPage: React.FC = () => {
 
@@ -14,23 +15,23 @@ const MainPage: React.FC = () => {
     };
 
     return (
+        <>
+            <div className="flex flex-col items-center justify-between w-full p-4 border-b md:flex-row">
+                {/* Left Side - Title and Breadcrumb */}
+                <div className="flex flex-col items-start text-center md:text-left">
+                    <h1 className="text-lg md:text-2xl font-semibold text-red-500">
+                        {title}
+                    </h1>
+                    {/* Breadcrumb is hidden on mobile */}
+                    <span className="text-xs md:text-sm text-[#683432] hidden md:inline">
+                        {breadcrumb}
+                    </span>
+                </div>
 
-        <div className="flex flex-col items-center justify-between w-full p-4 border-b md:flex-row">
-            {/* Left Side - Title and Breadcrumb */}
-            <div className="flex flex-col items-start text-center md:text-left">
-                <h1 className="text-lg md:text-2xl font-semibold text-[#3A3A3A]">
-                    {title}
-                </h1>
-                {/* Breadcrumb is hidden on mobile */}
-                <span className="text-xs md:text-sm text-[#683432] hidden md:inline">
-                    {breadcrumb}
-                </span>
-            </div>
-
-            {/* Right Side - Account Information */}
-            <div className="flex items-center gap-3 mt-3 md:mt-0">
-                {/* Name and status are hidden on smaller screens */}
-                {/* <div className="flex-col items-end hidden md:flex">
+                {/* Right Side - Account Information */}
+                <div className="flex items-center gap-3 mt-3 md:mt-0">
+                    {/* Name and status are hidden on smaller screens */}
+                    {/* <div className="flex-col items-end hidden md:flex">
             <span className="text-[#3A3A3A] font-medium">
               {user_data?.firstname} {user_data?.lastname}
             </span>
@@ -39,20 +40,22 @@ const MainPage: React.FC = () => {
             </span>
           </div> */}
 
-                <div className="relative">
-                    <div className="flex items-center">
-                        {/* Wrap the image in a relative container */}
-                        <div className="relative">
-                            {/* <img
+                    <div className="relative">
+                        <div className="flex items-center">
+                            {/* Wrap the image in a relative container */}
+                            <div className="relative">
+                                {/* <img
                   src={user_data?.image}
                   alt="Account"
                   className="object-cover w-8 h-8 border border-gray-300 rounded-full md:h-10 md:w-10"
                 /> */}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <MapView />
+        </>
     );
 };
 

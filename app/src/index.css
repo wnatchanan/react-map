@@ -1,8 +1,6 @@
-/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* @import "flowbite"; */
 
 body {
   font-family: 'Kanit', sans-serif;
