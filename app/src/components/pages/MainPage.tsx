@@ -6,7 +6,7 @@ const MainPage: React.FC = () => {
 
     let title, breadcrumb;
     title = 'MainPage';
-    breadcrumb = 'bma map viewer';
+    breadcrumb = 'BMA Map viewer';
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // Function to toggle the sidebar
