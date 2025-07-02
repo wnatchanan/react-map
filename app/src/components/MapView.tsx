@@ -88,63 +88,63 @@ const MapView: React.FC = () => {
 
     const loadGISDATA = async () => {
         const layers: any = [
-            {
-                id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
-                maxzoom: 15
-            },
-            {
-                id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
-            {
-                id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
-            {
-                id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
-                maxzoom: 15
-            },
-            {
-                id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, visible: true, icon: '/assets/images/school.png', minzoom: 10,
-                maxzoom: 22
-            },
-            {
-                id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, visible: true, icon: '/assets/images/station.png', minzoom: 10,
-                maxzoom: 22
-            },
-            {
-                id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, visible: true, icon: '/assets/images/cctv.png', minzoom: 10,
-                maxzoom: 22
-            },
-            {
-                id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
-            {
-                id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building_center.zip", geojson: null, visible: true, icon: null, minzoom: 15,
-                maxzoom: 22
-            },
             // {
-            //     id: 10, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 2", path: "bma_building_north.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
+            //     maxzoom: 15
+            // },
+            // {
+            //     id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
             //     maxzoom: 22
             // },
+            // {
+            //     id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
+            //     maxzoom: 15
+            // },
+            // {
+            //     id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, visible: true, icon: '/assets/images/school.png', minzoom: 10,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, visible: true, icon: '/assets/images/station.png', minzoom: 10,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, visible: true, icon: '/assets/images/cctv.png', minzoom: 10,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     maxzoom: 22
+            // },
+            // {
+            //     id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+            //     maxzoom: 22
+            // },
+            {
+                id: 10, type: "api", name_en: "air4thai", name: "รายงานสภาพอากาศ", path: "http://air4thai.com/forweb/getAQI_JSON.php", geojson: null, visible: true, icon: '/assets/images/air.png', minzoom: 15,
+                maxzoom: 22
+            },
             // {
             //     id: 11, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก 3", path: "bma_building_south.zip", geojson: null, visible: true, icon: null, minzoom: 15,
             //     maxzoom: 22
             // },
-            {
-                id: 12,
-                type: "arcgis",
-                name_en: "bma_basemap_arcgis",
-                name: "BMAGI Basemap 2564",
-                path: "",
-                geojson: null,
-                visible: false,
-                icon: null,
-                minzoom: 0,
-                maxzoom: 22,
+            // {
+            //     id: 12,
+            //     type: "arcgis",
+            //     name_en: "bma_basemap_arcgis",
+            //     name: "BMAGI Basemap 2564",
+            //     path: "",
+            //     geojson: null,
+            //     visible: false,
+            //     icon: null,
+            //     minzoom: 0,
+            //     maxzoom: 22,
 
-            }
+            // }
         ];
 
         setLoadingProgress({ loaded: 0, total: layers.length });
@@ -178,6 +178,22 @@ const MapView: React.FC = () => {
                 } else if (layer.type === "shp") {
                     const res: any = await webservice.loadShapeFile(`/assets/geodata/${layer.path}`);
                     if (res.features?.length > 0) geojson = res;
+                } else if (layer.type === "api") {
+                    const res: any = await webservice.loadAPI(layer.path);
+                    console.log(res);
+
+                    if (res.data.stations.length > 0) {
+                        geojson = {
+                            type: "FeatureCollection",
+                            features: res.data.stations.map((d: any) => ({
+                                type: "Feature",
+                                geometry: { type: "Point", coordinates: [+d.long, +d.lat] },
+                                properties: d,
+                            })),
+                        };
+                        console.log(geojson);
+
+                    }
                 }
 
                 const fullLayer = { ...layer, geojson };
@@ -240,6 +256,16 @@ const MapView: React.FC = () => {
 
     }
 
+    const setMarkerIcon = () => {
+        const divIcon = document.createElement('div');
+        divIcon.className = 'my-div-icon';
+        divIcon.innerHTML = `<div style="background: white; border: 2px solid #000; border-radius: 6px; padding: 4px;">
+        <strong>Custom</strong><br/>
+        Marker!
+        </div>`;
+        return divIcon
+    }
+
     const setContent = (props: any, layer: any) => {
         var content = ""
         if (layer == "bma_cctv") {
@@ -286,7 +312,133 @@ const MapView: React.FC = () => {
                 <b>longitude:</b> ${props.longitude}<br/>
             </div>
         `
+        } else if (layer == "air4thai") {
+            let AQILast: any = {};
+
+            try {
+                AQILast = JSON.parse(props.AQILast);
+            } catch (e) {
+                console.error("Invalid JSON in AQILast:", e);
+                AQILast = null;
+            }
+
+            // Color mapping
+            let colorMap: any = {
+                "0": "#808080", // gray
+                "1": "#0000FF", // blue
+                "2": "#008000"  // green
+            };
+
+            // Prepare AQI block
+            let aqiBlock = "-";
+            if (AQILast && AQILast.AQI) {
+                let aqiColor = colorMap[AQILast.AQI.color_id] || "#808080";
+                let aqiValue = AQILast.AQI.aqi;
+                aqiBlock = `
+                <div style="
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 24px;
+                  height: 24px;
+                  border-radius: 50%;
+                  background-color: ${aqiColor};
+                  color: #fff;
+                  font-weight: bold;
+                  font-size: 12px;
+                ">
+                  ${aqiValue}
+                </div>
+              `;
+            }
+
+            // Prepare pollutant rows
+            let pollutantRows = "";
+            if (AQILast) {
+                const pollutants = ["PM25", "PM10", "O3", "CO", "NO2", "SO2"];
+                pollutants.forEach(key => {
+                    const p = AQILast[key];
+                    if (
+                        p &&
+                        p.aqi !== "-1" &&
+                        p.aqi !== "-999"
+                    ) {
+                        let pollutantColor = colorMap[p.color_id] || "#808080";
+                        pollutantRows += `
+          <tr>
+            <td style="padding: 4px 8px; font-weight: bold;">${key}</td>
+            <td style="padding: 4px 8px;">
+              <div style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: ${pollutantColor};
+                color: #fff;
+                font-weight: bold;
+                font-size: 12px;
+                margin-right: 6px;
+              ">
+                ${p.aqi}
+              </div>
+              <span style="font-size: 12px;">${p.value}</span>
+            </td>
+          </tr>
+        `;
+                    }
+                });
+            }
+            content = `
+              <div style="font-family: sans-serif; font-size: 12px; line-height: 1.4;">
+                <strong style="font-size: 14px;">รายงานสภาพอากาศ</strong>
+                <table style="border-collapse: collapse; margin-top: 8px;">
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">ID:</td>
+                    <td style="padding: 4px 8px;">${props.stationID}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Type:</td>
+                    <td style="padding: 4px 8px;">${props.stationType}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Name:</td>
+                    <td style="padding: 4px 8px;">${props.nameTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Area:</td>
+                    <td style="padding: 4px 8px;">${props.areaTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Latitude:</td>
+                    <td style="padding: 4px 8px;">${props.lat}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Longitude:</td>
+                    <td style="padding: 4px 8px;">${props.long}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">วันที่:</td>
+                    <td style="padding: 4px 8px;">${AQILast.date}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">เวลา:</td>
+                    <td style="padding: 4px 8px;">${AQILast.time}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">AQI:</td>
+                    <td style="padding: 4px 8px;">
+                      ${aqiBlock}
+                    </td>
+                  </tr>
+                  ${pollutantRows}
+                </table>
+              </div>
+            `;
         }
+
+
         return content
     }
 
@@ -464,7 +616,7 @@ const MapView: React.FC = () => {
                 maxzoom: layer.maxzoom ?? 22,
                 paint: { 'fill-color': '#b3ff80', 'fill-opacity': 1 }
             };
-        } else if (layer.name_en === "bma_cctv" || layer.name_en === "air_pollution" || layer.name_en === "bma_school") {
+        } else if (layer.name_en === "bma_cctv" || layer.name_en === "air_pollution" || layer.name_en === "bma_school" || layer.name_en === "air4thai") {
             const iconId = `${layer.name_en}_icon`;
             if (!mapInstance.hasImage(iconId)) {
                 loadImagePopup({
@@ -554,7 +706,6 @@ const MapView: React.FC = () => {
                     .addTo(map.current!);
             });
         }
-
 
         mapInstance.addLayer(layerConfig);
 

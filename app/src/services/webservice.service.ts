@@ -2,6 +2,7 @@
 import { http } from "../http-common";
 import shp from "shpjs";
 import Papa from 'papaparse';
+
 const loadGeojsonFile = async (file_path: any) => {
     return http.get(file_path);
 };
@@ -26,11 +27,16 @@ const loadCSVFile = async (file_path: string) => {
 };
 
 
+const loadAPI = async (path: string) => {
+    return http.get(path)
+};
+
 
 const webservice = {
     loadGeojsonFile,
     loadShapeFile,
-    loadCSVFile
+    loadCSVFile,
+    loadAPI
 };
 
 export default webservice;
