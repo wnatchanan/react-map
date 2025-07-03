@@ -182,7 +182,7 @@ const MapView: React.FC = () => {
                     if (res.features?.length > 0) geojson = res;
                 } else if (layer.type === "api") {
                     const res: any = await webservice.loadAPI(layer.path);
-                    console.log(res);
+                    // console.log(res);
 
                     if (res.data.stations.length > 0) {
                         geojson = {
@@ -193,7 +193,7 @@ const MapView: React.FC = () => {
                                 properties: d,
                             })),
                         };
-                        console.log(geojson);
+                        // console.log(geojson);
 
                     }
                 }
