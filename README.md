@@ -1,5 +1,4 @@
 # react-map
--
 1. ติดตั้ง Maplibre ใน React
 ```
 npm install maplibre-gl @types/maplibre-gl
@@ -165,7 +164,7 @@ touch src/services/webservice.service.ts
 
 code ใน webservice.service.ts
 
-
+```
 import { http } from "../http-common";
 
 
@@ -178,3 +177,121 @@ const webservice = {
 };
 
 export default webservice;
+```
+
+12. ประกาศตัวแปลรับค่า GISData และเตรียม Function สำหรับเรียกใช้งานข้อมูลใน folder geodata
+
+```
+    const [GISData, setGISData] = useState<any[]>([]);
+
+    const loadGISDATA = async () => {
+        const layers: any = [
+            {
+                id: 1, type: "geojson", name_en: "district", name: "เขต", path: "district.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
+                maxzoom: 15
+            }
+        ];
+        const loadedLayers: any[] = [];
+
+        for (const [index, layer] of layers.entries()) {
+
+            try {
+                let geojson = null;
+
+                if (layer.type === "geojson") {
+                    const res = await webservice.loadGeojsonFile(`/assets/geodata/${layer.path}`);
+                    geojson = res.status === 200 ? res.data : null;
+                }
+                const fullLayer = { ...layer, geojson };
+                loadedLayers.push(fullLayer);
+
+            } catch (err) {
+                console.error(`Failed to load ${layer.name_en}:`, err);
+            }
+        }
+
+        return loadedLayers;
+    };
+```
+
+13. สร้าง function addLayer 
+```
+    const addLayer = (layer: any, mapInstance: maplibregl.Map) => {
+        if (!layer.geojson) return;
+
+        const sourceId = `${layer.name_en}_${layer.id}_source`;
+        const layerId = `${layer.name_en}_${layer.id}_layer`;
+
+        mapInstance.addSource(sourceId, {
+          type: "geojson",
+          data: layer.geojson,
+        });
+
+        let layerConfig: any = {
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            minzoom: layer.minzoom ?? 0,
+            maxzoom: layer.maxzoom ?? 22,
+            paint: {
+                "fill-color": "#ff0000",
+                "fill-opacity": 0.5,
+            },
+            layout: {
+                visibility: layer.visible ? "visible" : "none",
+            },
+        };
+
+        if (layer.name_en === 'district') {
+            layerConfig = {
+                id: layerId,
+                type: "line",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: { 'line-color': '#f391d6', 'line-width': 10 }
+            };
+        } 
+        mapInstance.addLayer(layerConfig);
+
+    };
+```
+
+14. เรียกใช้งาน function setGeoData , loadGISDATA และ addLayer
+```
+        map.current = mapInstance;
+
+        mapInstance.on("load", () => {
+            loadGISDATA().then((data) => {
+                setGISData(data);
+                data.forEach((layer) => addLayer(layer, mapInstance));
+            });
+        });
+```
+
+15. เพิ่มชั้นข้อมูล  Geojson 
+```
+
+            {
+                id: 2, type: "geojson", name_en: "road", name: "เส้นถนน", path: "bma_road.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 3, type: "geojson", name_en: "bike_way", name: "ทางจักรยาน", path: "bike_way.geojson", geojson: null, visible: true, icon: null, minzoom: 15,
+                maxzoom: 22
+            },
+            {
+                id: 4, type: "geojson", name_en: "bma_zone", name: "Zone", path: "bma_zone.geojson", geojson: null, visible: true, icon: null, minzoom: 10,
+                maxzoom: 15
+            },
+            {
+                id: 5, type: "geojson", name_en: "bma_school", name: "โรงเรียน", path: "bma_school.geojson", geojson: null, visible: true, icon: '/assets/images/school.png', minzoom: 10,
+                maxzoom: 22
+            },
+            {
+                id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, visible: true, icon: '/assets/images/station.png', minzoom: 10,
+                maxzoom: 22
+            },
+
+```
+

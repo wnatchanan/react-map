@@ -127,13 +127,10 @@ const MapView: React.FC = () => {
         ];
 
         setLoadingProgress({ loaded: 0, total: layers.length });
-        // setLoadingStatus({}); // reset
 
         const loadedLayers: any[] = [];
 
         for (const [index, layer] of layers.entries()) {
-            // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'loading' }));
-
             try {
                 let geojson = null;
 
@@ -159,7 +156,6 @@ const MapView: React.FC = () => {
                     if (res.features?.length > 0) geojson = res;
                 } else if (layer.type === "api") {
                     const res: any = await webservice.loadAPI(layer.path);
-                    // console.log(res);
 
                     if (res.data.stations.length > 0) {
                         geojson = {
@@ -170,20 +166,16 @@ const MapView: React.FC = () => {
                                 properties: d,
                             })),
                         };
-                        // console.log(geojson);
 
                     }
                 }
 
                 const fullLayer = { ...layer, geojson };
                 loadedLayers.push(fullLayer);
-                // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'loaded' }));
 
             } catch (err) {
-                // console.error(`Failed to load ${layer.name_en}:`, err);
-                // setLoadingStatus((prev) => ({ ...prev, [layer.id]: 'error' }));
+                console.error(`Failed to load ${layer.name_en}:`, err);
             }
-
             setLoadingProgress({ loaded: index + 1, total: layers.length });
         }
 
