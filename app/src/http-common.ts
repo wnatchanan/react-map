@@ -1,6 +1,4 @@
 import axios from "axios";
-
-// const api_path = "http://localhost:3000";
 const api_path = "";
 
 const http = axios.create({

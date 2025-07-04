@@ -1,51 +1,22 @@
 # react-map
 -
-1. ติดตั้ง maplibre-gl และ tailwindcss
-
-initialize Tailwind CSS:
-
-npm install maplibre-gl
-npm install -D tailwindcss @tailwindcss/cli postcss autoprefixer
-<!-- npm install tailwindcss  -->
-npx tailwindcss init -p
-
-touch src/tailwind.config.js
-
+1. ติดตั้ง Maplibre ใน React
 ```
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-    content: [
-        './index.html',
-        './src/**/*.{js,ts,jsx,tsx}',
-    ],
-    theme: {
-        extend: {},
-    },
-    plugins: [],
-}
-
-```
-
-touch src/postcss.config.js
-```
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-};
-
+npm install maplibre-gl @types/maplibre-gl
 ```
 
 2. สร้าง folder components
+```
 mkdir src/components
+```
 
-3. สร้าง ไฟล์ components.tsx ชื่อว่า MapView.tsx และ MapView.css
+3. สร้าง ไฟล์ MapView.tsx และ MapView.css
+```
 touch src/components/MapView.tsx
 touch src/components/MapView.css
+```
 
-
-code ใน MapView.tsx
+4. สร้าง Map ใน MapView.tsx ด้วย code
 ```
 import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
@@ -77,8 +48,7 @@ export default MapView;
 ```
 
 
-
-code ใน MapView.css
+4. แต่ง style map ใน MapView.css ด้วย code
 ```
 .map-container {
   width: 100%;
@@ -87,59 +57,124 @@ code ใน MapView.css
 
 ```
 
-4. add map router 
+5. เพิ่ม Basemap ใน MapView.tsx
+```
+const baseMapStyles = [
+    {
+        name: "Google Hybrid",
+        style: "./basemap/ghyb.json"
+    },
+    {
+        name: "OpenStreetMap",
+        style: "./basemap/osm.json"
+    },
+    {
+        name: "ESRI WorldImagery",
+        style: "./basemap/esri.json"
+    },
+     {
+        name: "Carto Light",
+        style: "./basemap/cartoLight.json"
+    },
+     {
+        name:  "Carto Dark",
+        style: "./basemap/cartoDark.json"
+    },
+];
+```
 
+6. เรียกใช้งาน Basemap 
+```
+useEffect(() => {
+  const mapInstance = new maplibregl.Map({
+    container: mapContainer.current!,
+    style: baseMapStyles[0].style,
+    center: [100.577982, 13.845845],
+    zoom: 10,
+  });
+
+  return () => mapInstance.remove();
+}, []);
+```
+
+7. เพิ่ม App router ใน React
+```
 npm install react-router-dom
+```
 
-
-5. เปลี่ยน src/App.tsx เป็น code ดังนัี้
+8. เรียกใช้งาน Router ใน และเปลี่ยน src/App.tsx เป็น code ดังนัี้
 
 ```
-// src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import MapView from './MapView';
 
-const Home: React.FC = () => <h1>Welcome to the homepage</h1>;
-
 function App() {
   return (
     <Router>
-      <nav>
-        <ul>
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/map">Map</Link></li>
-        </ul>
-      </nav>
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/map" element={<MapView />} />
+        <Route path="*" element={<Navigate to="/map" />} />
       </Routes>
     </Router>
   );
-}
 
+}
 export default App;
 
 ```
 
-4. สร้างไฟล์ webservice.service.ts 
-mkdir src/services
-touch src/services/webservice.service.ts 
-
-
+9. ติดตั้ง libary สำหรับ เรียกใช้งานข้อมูล
+```
 npm i axios
+```
 
-npm i shpjs
-
+10. สร้างไฟล์ http-common.ts
+```
 touch http-common.ts
+```
+code ใน http-common.ts
+```
+import axios from "axios";
+const api_path = "";
+
+const http = axios.create({
+    baseURL: api_path,
+    headers: {
+        "Content-type": "application/json"
+    }
+});
+
+export { http };
+
+```
+
+11. สร้าง service สำหรับดังข้อมูลภายใน webapp
+
+เริ่มจากสร้าง folder service ด้วยคำสั่ง
+
+```
+mkdir src/services
+```
+
+จากนั้นสร้างไฟล์ webservice.service.ts ด้วยคำสั่ง
+
+```
+touch src/services/webservice.service.ts 
+```
+
+code ใน webservice.service.ts
 
 
-npm i papaparse
+import { http } from "../http-common";
 
-npm install mapbox-gl
 
-mkdir src/components/pages
+const loadGeojsonFile = async (file_path: any) => {
+    return http.get(file_path);
+};
 
-touch src/components/MainPage.tsx
-touch src/components/MainPage.css
+const webservice = {
+    loadGeojsonFile
+};
+
+export default webservice;

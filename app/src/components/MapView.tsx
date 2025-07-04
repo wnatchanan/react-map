@@ -3,50 +3,27 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import webservice from "../services/webservice.service";
 import './MapView.css'
+
 const baseMapStyles = [
     {
         name: "Google Hybrid",
-        style: {
-            version: 8,
-            // glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-            sources: {
-                "google-hybrid": {
-                    type: "raster",
-                    tiles: ["https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"],
-                    tileSize: 256,
-                },
-            },
-            layers: [
-                {
-                    id: "google-layer",
-                    type: "raster",
-                    source: "google-hybrid",
-                },
-            ],
-        },
+        style: "./basemap/ghyb.json"
     },
     {
         name: "OpenStreetMap",
-        style: {
-            version: 8,
-            sources: {
-                "osm-tiles": {
-                    type: "raster",
-                    tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-                    tileSize: 256,
-                    attribution: "© OpenStreetMap contributors",
-                },
-            },
-            layers: [
-                {
-                    id: "osm-layer",
-                    type: "raster",
-                    source: "osm-tiles",
-                    minzoom: 0,
-                    maxzoom: 18,
-                },
-            ],
-        },
+        style: "./basemap/osm.json"
+    },
+    {
+        name: "ESRI WorldImagery",
+        style: "./basemap/esri.json"
+    },
+    {
+        name: "Carto Light",
+        style: "./basemap/cartoLight.json"
+    },
+    {
+        name: "Carto Dark",
+        style: "./basemap/cartoDark.json"
     },
 ];
 
@@ -66,7 +43,7 @@ const MapView: React.FC = () => {
     useEffect(() => {
         const mapInstance = new maplibregl.Map({
             container: mapContainer.current!,
-            style: mapStyle,
+            style: baseMapStyles[0].style,
             center: [100.577982, 13.845845],
             zoom: 10,
         });
