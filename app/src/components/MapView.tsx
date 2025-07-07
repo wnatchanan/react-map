@@ -67,7 +67,7 @@ const MapView: React.FC = () => {
         total: 0
     });
 
-    // const [loadingStatus, setLoadingStatus] = useState<{ [key: number]: string }>({});
+    const [loadingStatus, setLoadingStatus] = useState<{ [key: number]: string }>({});
 
     const loadGISDATA = async () => {
         const layers: any = [
@@ -472,7 +472,8 @@ const MapView: React.FC = () => {
                 maxzoom: layer.maxzoom ?? 22,
                 paint: { 'line-color': '#f391d6', 'line-width': 10 }
             };
-        } else if (layer.name_en === "road") {
+        }
+        else if (layer.name_en === "road") {
             layerConfig = {
                 id: layerId,
                 type: "line",
@@ -562,7 +563,8 @@ const MapView: React.FC = () => {
                 });
             }
             return;
-        } else if (layer.name_en === 'bma_building') {
+        }
+        else if (layer.name_en === 'bma_building') {
             const color = getColorByIndex(layer.id);
 
             /* ---------- helper expressions ---------- */

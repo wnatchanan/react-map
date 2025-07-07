@@ -291,7 +291,105 @@ export default webservice;
             {
                 id: 6, type: "geojson", name_en: "air_pollution", name: "สถานีตรวจวัดคุณภาพฯ", path: "air_pollution.geojson", geojson: null, visible: true, icon: '/assets/images/station.png', minzoom: 10,
                 maxzoom: 22
-            },
+            }
 
 ```
+
+16 Custom Style Geojson Layer
+layer road
+```
+      else if (layer.name_en === "road") {
+            layerConfig = {
+                id: layerId,
+                type: "line",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: {
+                    "line-color": "#ffe53d",
+                    "line-width": 3,
+                },
+            };
+        } else if (layer.name_en === "bike_way") {
+            layerConfig = {
+                id: layerId,
+                type: "line",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: {
+                    'line-color': '#ffa200',
+                    'line-width': 5
+                },
+            };
+        } else if (layer.name_en === 'bma_zone') {
+
+
+            const features = layer.geojson.features;
+
+            const property = 'z_code';
+
+            const uniqueZoneIds: string[] = Array.from(
+                new Set(
+                    features
+                        .map((f: any) => f.properties?.z_code as string)
+                        .filter((z_code: string) => z_code !== undefined && z_code !== null)
+                )
+            );
+
+            const colorMap: { [key: string]: string } = {};
+            uniqueZoneIds.forEach((z_code, i) => {
+                colorMap[z_code] = getColorByIndex(i);
+            });
+
+            const colorExpression: (string | any[])[] = ['match', ['get', property]];
+            for (const [z_code, color] of Object.entries(colorMap)) {
+                colorExpression.push(z_code, color);
+            }
+            colorExpression.push('#cccccc');
+            layerConfig = {
+                id: layerId,
+                type: "fill",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: {
+                    'fill-color': colorExpression,
+                    'fill-opacity': 0.25,
+                }
+            };
+
+        } else if (layer.name_en === 'bma_green_area') {
+            layerConfig = {
+                id: layerId,
+                type: "fill",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: { 'fill-color': '#b3ff80', 'fill-opacity': 1 }
+            };
+        } else if (layer.name_en === "bma_cctv" || layer.name_en === "air_pollution" || layer.name_en === "bma_school") {
+            const iconId = `${layer.name_en}_icon`;
+            if (!mapInstance.hasImage(iconId)) {
+                loadImagePopup({
+                    layer: layer.name_en, iconPath: layer.icon, sourceId, iconId, layerId
+                })
+            } else {
+                mapInstance.addLayer({
+                    id: layerId,
+                    type: "symbol",
+                    source: sourceId,
+                    minzoom: layer.minzoom ?? 0,
+                    maxzoom: layer.maxzoom ?? 22,
+                    layout: {
+                        "icon-image": iconId,
+                        "icon-size": 0.5,
+                    },
+                });
+            }
+            return;
+        }
+```
+
+
 
