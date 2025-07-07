@@ -22,25 +22,28 @@ import maplibregl from 'maplibre-gl';
 import './MapView.css';
 
 const MapView: React.FC = () => {
-  const mapContainer = useRef<HTMLDivElement | null>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+    const mapContainer = useRef<HTMLDivElement | null>(null);
+    const map = useRef<maplibregl.Map | null>(null);
 
-  useEffect(() => {
-    if (map.current || !mapContainer.current) return;
+    useEffect(() => {
+        if (map.current || !mapContainer.current) return;
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: 'https://demotiles.maplibre.org/style.json', // public demo tiles
-      center: [0, 0],
-      zoom: 2,
-    });
+        map.current = new maplibregl.Map({
+            container: mapContainer.current,
+            style: 'https://demotiles.maplibre.org/style.json', // public demo tiles
+            center: [0, 0],
+            zoom: 2,
+        });
+    }, []);
 
-    return () => {
-      map.current?.remove();
-    };
-  }, []);
-
-  return <div className="map-container" ref={mapContainer} />;
+    return (
+        <div className="map-view-wrapper" style={{ display: "flex" }}>
+            <div
+                ref={mapContainer}
+                style={{ width: "100%", height: "100vh" }}
+            ></div>
+        </div>
+    )
 };
 
 export default MapView;
@@ -50,10 +53,11 @@ export default MapView;
 4. แต่ง style map ใน MapView.css ด้วย code
 ```
 .map-container {
-  width: 100%;
-  height: 100vh;
+    width: 100%;
+    height: 100vh;
+    /* Or whatever height you need */
+    z-index: 999;
 }
-
 ```
 
 5. เพิ่ม Basemap ใน MapView.tsx
@@ -104,22 +108,31 @@ npm install react-router-dom
 8. เรียกใช้งาน Router ใน และเปลี่ยน src/App.tsx เป็น code ดังนัี้
 
 ```
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import MapView from './MapView';
+import {
+  HashRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import MapView from './components/MapView';
+import MainPage from "./components/pages/MainPage";
+import './index.css'
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/map" element={<MapView />} />
-        <Route path="*" element={<Navigate to="/map" />} />
+        <Route path="*" element={<Navigate to="/home" />} />
+        <Route path="/home" element={<MainPage />} />
       </Routes>
     </Router>
   );
 
 }
+
 export default App;
+
 
 ```
 
@@ -261,12 +274,14 @@ export default webservice;
 ```
         map.current = mapInstance;
 
-        mapInstance.on("load", () => {
+        map.current?.on("load", () => {
             loadGISDATA().then((data) => {
                 setGISData(data);
                 data.forEach((layer) => addLayer(layer, mapInstance));
             });
         });
+
+        return () => map.current?.remove();
 ```
 
 15. เพิ่มชั้นข้อมูล  Geojson 
@@ -310,7 +325,12 @@ layer road
                     "line-width": 3,
                 },
             };
-        } else if (layer.name_en === "bike_way") {
+        }  
+```
+
+layer bike_way
+```
+else if (layer.name_en === "bike_way") {
             layerConfig = {
                 id: layerId,
                 type: "line",
@@ -322,8 +342,20 @@ layer road
                     'line-width': 5
                 },
             };
-        } else if (layer.name_en === 'bma_zone') {
+ } 
+```
 
+Add Function Custom Zone Color 
+```
+    const colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+    const getColorByIndex = (i: number) => {
+        return colorPalette[i % colorPalette.length];
+    }
+```
+
+layer bma_zone
+```
+else if (layer.name_en === 'bma_zone') {
 
             const features = layer.geojson.features;
 
@@ -359,37 +391,10 @@ layer road
                 }
             };
 
-        } else if (layer.name_en === 'bma_green_area') {
-            layerConfig = {
-                id: layerId,
-                type: "fill",
-                source: sourceId,
-                minzoom: layer.minzoom ?? 0,
-                maxzoom: layer.maxzoom ?? 22,
-                paint: { 'fill-color': '#b3ff80', 'fill-opacity': 1 }
-            };
-        } else if (layer.name_en === "bma_cctv" || layer.name_en === "air_pollution" || layer.name_en === "bma_school") {
-            const iconId = `${layer.name_en}_icon`;
-            if (!mapInstance.hasImage(iconId)) {
-                loadImagePopup({
-                    layer: layer.name_en, iconPath: layer.icon, sourceId, iconId, layerId
-                })
-            } else {
-                mapInstance.addLayer({
-                    id: layerId,
-                    type: "symbol",
-                    source: sourceId,
-                    minzoom: layer.minzoom ?? 0,
-                    maxzoom: layer.maxzoom ?? 22,
-                    layout: {
-                        "icon-image": iconId,
-                        "icon-size": 0.5,
-                    },
-                });
-            }
-            return;
         }
 ```
+
+
 
 
 
