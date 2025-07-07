@@ -347,7 +347,7 @@ else if (layer.name_en === "bike_way") {
  } 
 ```
 
-Add Function Custom Zone Color 
+เพิ่ม Function Custom Zone Color 
 ```
     const colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
     const getColorByIndex = (i: number) => {
@@ -459,7 +459,7 @@ else if (layer.name_en === "bma_school") {
     }
 ```
 
-้เพิ่ม Function addDataPopup
+เพิ่ม Function addDataPopup
 ```
     const addDataPopup = (data: any) => {
         if (!map.current) return;
@@ -582,4 +582,448 @@ if (layer == "bma_cctv") {
     id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, visible: true, icon: null, minzoom: 15,
     maxzoom: 22
 },
+```
+
+เพิ่ม layer style bma_green_area
+```
+else if (layer.name_en === 'bma_green_area') {
+            layerConfig = {
+                id: layerId,
+                type: "fill",
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: { 'fill-color': '#b3ff80', 'fill-opacity': 1 }
+            };
+        }
+```
+
+เพิ่ม layer style bma_building
+```
+else if (layer.name_en === 'bma_building') {
+            const color = getColorByIndex(layer.id);
+            const areaExpr: any[] = ['to-number', ['get', 'area_in_me'], 0];
+            const heightExpr: any = [
+                'case',
+                ['<', areaExpr, 200], 6,
+                ['<', areaExpr, 400], 8,
+                20
+            ];
+            layerConfig = {
+                id: layerId,
+                type: 'fill-extrusion',
+                source: sourceId,
+                minzoom: layer.minzoom ?? 0,
+                maxzoom: layer.maxzoom ?? 22,
+                paint: {
+                    'fill-extrusion-color': color,
+                    'fill-extrusion-height': heightExpr,
+                    'fill-extrusion-opacity': 0.9
+                }
+            };
+            map.current?.on('click', layerId, (e) => {
+                const feature = e.features?.[0];
+                if (!feature) return;
+
+                const props = feature.properties || {};
+
+                new maplibregl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(setContent(props, layer.name_en))
+                    .addTo(map.current!);
+            });
+        }
+```
+
+เพิ่ม popup content ของ bma_building
+
+```
+else if (layer == "bma_building") {
+            content = `
+            <div style="font-size: 12px;">
+            <strong>Building Info</strong><br/>
+                <b>ID:</b> ${props.id}<br/>
+                <b>Area:</b> ${props.area_in_me}<br/>
+                <b>Confidence:</b> ${props.confidence}<br/>
+                <b>latitude:</b> ${props.latitude}<br/>
+                <b>longitude:</b> ${props.longitude}<br/>
+            </div>
+        `
+        }
+```
+19. เรียกข้อมูลจาก API (AQI)
+
+```
+{
+    id: 10, type: "api", name_en: "air4thai", name: "รายงานสภาพอากาศ", path: "http://air4thai.com/forweb/getAQI_JSON.php", geojson: null, visible: true, icon: '/assets/images/air.png', minzoom: 15, maxzoom: 22
+},
+```
+
+เพิ่มเงื่อนไข addSource ของ air4thai
+```
+        if (layer.name_en === "air4thai") {
+            const filteredFeatures = layer.geojson.features.filter((f: any) => {
+                let AQILast: any;
+                try {
+                    AQILast = typeof f.properties.AQILast === "string"
+                        ? JSON.parse(f.properties.AQILast)
+                        : f.properties.AQILast;
+                } catch (e) {
+                    console.error("Invalid AQILast JSON:", e);
+                    return false;
+                }
+
+                if (!AQILast || !AQILast[airtype]) return false;
+
+                const aqiVal = AQILast[airtype].aqi;
+                return aqiVal !== "-1" && aqiVal !== "-999";
+            });
+
+            const filteredGeojson: any = {
+                type: "FeatureCollection",
+                features: filteredFeatures
+            };
+
+            mapInstance.addSource(sourceId, {
+                type: "geojson",
+                data: filteredGeojson,
+            });
+        } else {
+            mapInstance.addSource(sourceId, {
+                type: "geojson",
+                data: layer.geojson,
+            });
+
+        }
+```
+
+เพิ่ม layer style air4thai
+```
+else if (layer.name_en === "air4thai") {
+            // Add colored HTML markers
+            addAir4ThaiMarkers(layer);
+            return;
+        }
+```
+
+เพิ่ม function addAir4ThaiMarkers
+```
+    const air4thaiMarkersRef = useRef<maplibregl.Marker[]>([]);
+
+    const addAir4ThaiMarkers = (layer: any, type?: string) => {
+        if (!map.current) return;
+
+        air4thaiMarkersRef.current.forEach(marker => marker.remove());
+        air4thaiMarkersRef.current = [];
+
+        const features = layer.geojson.features;
+
+        const atype = type ?? airtype
+
+        features.forEach((f: any) => {
+            const coords = f.geometry.coordinates;
+
+            let AQILast: any;
+            try {
+                AQILast = typeof f.properties.AQILast === "string"
+                    ? JSON.parse(f.properties.AQILast)
+                    : f.properties.AQILast;
+            } catch (e) {
+                console.error("Invalid AQILast JSON:", e);
+                return;
+            }
+
+            if (!AQILast || !AQILast[atype]) return;
+
+            const pollutant = AQILast[atype];
+
+            if (!pollutant || pollutant.aqi === "-1" || pollutant.aqi === "-999") return;
+
+            const colorMap: any = {
+                "0": "#808080", // gray
+                "1": "#00bfff", // sky blue
+                "2": "#32cd32", // lime green
+                "3": "#ffa500", // orange
+                "4": "#ff4500", // red-orange
+                "5": "#800080", // purple
+            };
+
+            const color = colorMap[pollutant.color_id] || "#cccccc";
+
+            // 🔵 Marker HTML
+            const markerEl = document.createElement("div");
+            markerEl.style.width = "36px";
+            markerEl.style.height = "36px";
+            markerEl.style.background = color;
+            markerEl.style.borderRadius = "50%";
+            markerEl.style.display = "flex";
+            markerEl.style.alignItems = "center";
+            markerEl.style.justifyContent = "center";
+            markerEl.style.color = "#ffffff";
+            markerEl.style.fontSize = "13px";
+            markerEl.style.fontWeight = "bold";
+            markerEl.style.border = "2px solid white";
+            markerEl.style.boxShadow = "0 0 3px rgba(0,0,0,0.4)";
+            markerEl.innerText = atype == "AQI" ? pollutant.aqi : pollutant.value;
+
+            const marker = new maplibregl.Marker({ element: markerEl })
+                .setLngLat(coords)
+                .setPopup(
+                    new maplibregl.Popup({ offset: 25 }).setHTML(setContent(f.properties, layer.name_en))
+                )
+                .addTo(map.current!);
+
+            air4thaiMarkersRef.current.push(marker);
+        });
+    };
+```
+
+เพิ่ม popup content air4thai
+```
+ else if (layer == "air4thai") {
+            let AQILast: any = props.AQILast
+            content = `
+              <div style="font-family: sans-serif; font-size: 12px; line-height: 1.4;">
+                <strong style="font-size: 14px;">รายงานสภาพอากาศ</strong>
+                <table style="border-collapse: collapse; margin-top: 8px;">
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">ID:</td>
+                    <td style="padding: 4px 8px;">${props.stationID}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Type:</td>
+                    <td style="padding: 4px 8px;">${props.stationType}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Name:</td>
+                    <td style="padding: 4px 8px;">${props.nameTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Area:</td>
+                    <td style="padding: 4px 8px;">${props.areaTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Latitude:</td>
+                    <td style="padding: 4px 8px;">${props.lat}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Longitude:</td>
+                    <td style="padding: 4px 8px;">${props.long}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">วันที่:</td>
+                    <td style="padding: 4px 8px;">${AQILast.date}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">เวลา:</td>
+                    <td style="padding: 4px 8px;">${AQILast.time}</td>
+                  </tr>
+                </table>
+              </div>
+            `;
+        }
+```
+
+21. เพิ่ม layer control Basemap
+```
+<div className="layer-control" style={{ padding: "10px" }}>
+                <label>Basemap:</label>
+                <select
+                    value={selectedBasemap}
+                    onChange={(e) => handleBasemapChange(e.target.value)}
+                >
+                    {baseMapStyles.map((b) => (
+                        <option key={b.name} value={b.name}>
+                            {b.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+```
+
+เพิ่ม Function handleBasemapChange
+```
+    const handleBasemapChange = (basemapName: string) => {
+        if (!map.current) return;
+
+        const basemap: any = baseMapStyles.find(b => b.name === basemapName);
+        if (!basemap?.style) return;
+
+        setSelectedBasemap(basemapName);
+        setMapStyle(basemap.style);
+        map.current.setStyle(basemap.style);
+        map.current.once('idle', async () => {
+            GISData.forEach(layer => {
+                if (layer.geojson || layer.type === 'arcgis') {
+                    addLayer(layer, map.current!);
+                }
+            });;
+        });
+    };
+```
+
+เพิ่ม Function cachedIcon
+```
+    async function cachedIcon() {
+        if (!map.current) return;
+
+        await Promise.all(
+            Object.entries(loadedImages.current).map(([id, url]) =>
+                new Promise<void>((resolve, reject) => {
+                    if (map.current!.hasImage(id)) return resolve();          // sprite already has it
+
+                    map.current!.loadImage(url)
+                        .then(img => {
+                            map.current!.addImage(id, img.data as ImageBitmap, { pixelRatio: 1 });
+                            resolve();
+                        })
+                        .catch(reject);
+                }),
+            ),
+        );
+    }
+```
+
+เพิ่ม div layer control
+
+```
+ <div>
+        {GISData.map((layer) => (
+            <div key={layer.id}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={layer.visible}
+                                    onChange={() => toggleLayerVisibility(layer.id)}
+                                />
+                                {layer.name}
+                            </label>
+                            {layer.name_en == "air4thai" && (
+                                <select
+                                    value={airtype}
+                                    onChange={(e) => {
+                                        const newAirType = e.target.value;
+                                        handleAirTypeChange(newAirType)
+                                    }}
+                                >
+                                    {AirTypeList.map((item) => (
+                                        <option key={item} value={item}>
+                                            {item}
+                                        </option>
+                                    ))}
+                                </select>
+
+                            )}
+                        </div>
+                    ))}
+                </div>
+```
+เพิ่ม function handleBasemapChange
+```
+    const handleBasemapChange = (basemapName: string) => {
+        if (!map.current) return;
+
+        const basemap: any = baseMapStyles.find(b => b.name === basemapName);
+        if (!basemap?.style) return;
+
+        setSelectedBasemap(basemapName);
+        setMapStyle(basemap.style);
+        map.current.setStyle(basemap.style);
+        map.current.once('idle', async () => {
+            await cachedIcon();
+            GISData.forEach(layer => {
+                if (layer.geojson || layer.type === 'arcgis') {
+                    addLayer(layer, map.current!);
+                }
+            });;
+        });
+    };
+```
+
+เพิ่ม function toggleLayerVisibility
+
+```
+const toggleLayerVisibility = (layerId: number) => {
+        setGISData((prev) =>
+            prev.map((layer) => {
+                if (layer.id === layerId) {
+                    const newVisible = !layer.visible;
+
+                    if (layer.name_en === "air4thai") {
+                        if (newVisible) {
+                            showAir4ThaiMarkers(layer);
+                        } else {
+                            hideAir4ThaiMarkers();
+                        }
+                    } else {
+                        const mapLayerId = `${layer.name_en}_${layer.id}_layer`;
+                        if (map.current?.getLayer(mapLayerId)) {
+                            map.current.setLayoutProperty(
+                                mapLayerId,
+                                "visibility",
+                                newVisible ? "visible" : "none"
+                            );
+                        }
+                    }
+
+                    return { ...layer, visible: newVisible };
+                }
+                return layer;
+            })
+        );
+    };
+```
+```
+const showAir4ThaiMarkers = (layer: any) => {
+    addAir4ThaiMarkers(layer);
+};
+
+const hideAir4ThaiMarkers = () => {
+    air4thaiMarkersRef.current.forEach(marker => marker.remove());
+    air4thaiMarkersRef.current = [];
+};
+
+
+
+
+const handleAirTypeChange = (type: string) => {
+        setAirType(type);
+        refreshAir4ThaiLayer(type);
+    };
+
+    const refreshAir4ThaiLayer = (type: string) => {
+        const layer = GISData.find(l => l.name_en === "air4thai");
+        if (!layer || !layer.visible) return;
+        air4thaiMarkersRef.current.forEach(marker => marker.remove());
+        air4thaiMarkersRef.current = [];
+
+        addAir4ThaiMarkers(layer, type);
+    };
+
+```
+
+เพิ่ม loadingProgress
+```
+    const [loadingProgress, setLoadingProgress] = useState<{ loaded: number, total: number }>({
+        loaded: 0,
+        total: 0
+    });
+```
+
+ใช้งาน loadingProgress
+```
+setLoadingProgress({ loaded: 0, total: layers.length });
+
+setLoadingProgress({ loaded: index + 1, total: layers.length });
+```
+
+เพิ่ม div loadingProgress
+```
+<div style={{ marginTop: 10 }}>
+                    {loadingProgress.loaded < loadingProgress.total && (
+                        <div>
+                            Loading GIS Data… {loadingProgress.loaded} / {loadingProgress.total}
+                        </div>
+                    )}
+                </div>
 ```
