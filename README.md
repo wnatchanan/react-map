@@ -2,6 +2,8 @@
 1. ติดตั้ง Maplibre ใน React
 ```
 npm install maplibre-gl @types/maplibre-gl
+npm install  --save-dev papaparse @types/papaparse
+npm instasll --save-dev shpjs @types/shpjs
 ```
 
 2. สร้าง folder components
@@ -310,7 +312,7 @@ export default webservice;
 
 ```
 
-16 Custom Style Geojson Layer
+16. ปรับแต่ง Style Geojson Layer
 layer road
 ```
       else if (layer.name_en === "road") {
@@ -394,7 +396,190 @@ else if (layer.name_en === 'bma_zone') {
         }
 ```
 
+layer bma_school
+```
+else if (layer.name_en === "bma_school") {
+            const iconId = `${layer.name_en}_icon`;
+            if (!mapInstance.hasImage(iconId)) {
+                loadImagePopup({
+                    layer: layer.name_en, iconPath: layer.icon, sourceId, iconId, layerId
+                })
+            } else {
+                mapInstance.addLayer({
+                    id: layerId,
+                    type: "symbol",
+                    source: sourceId,
+                    minzoom: layer.minzoom ?? 0,
+                    maxzoom: layer.maxzoom ?? 22,
+                    layout: {
+                        "icon-image": iconId,
+                        "icon-size": 0.5,
+                    },
+                });
+            }
+            return;
+        }
 
+}
+```
+เพิ่ม Function loadImagePopup
+```
 
+    const loadedImages = useRef<{ [key: string]: string }>({});
 
+    const loadImagePopup = (data: any) => {
+        map.current!.loadImage(data.iconPath)
+            .then((img) => {
+                const raw = img.data as HTMLImageElement | ImageBitmap;
 
+                const targetSize = 48;
+
+                const canvas = document.createElement("canvas");
+                canvas.width = targetSize;
+                canvas.height = targetSize;
+
+                const ctx = canvas.getContext("2d")!;
+                ctx.drawImage(raw, 0, 0, targetSize, targetSize);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) return;
+
+                    createImageBitmap(blob).then((resizedBitmap) => {
+                        if (!map.current!.hasImage(data.iconId)) {
+                            map.current!.addImage(data.iconId, resizedBitmap, { pixelRatio: 1 });
+                            loadedImages.current[data.iconId] = data.iconPath;
+                        }
+                        addDataPopup(data);
+                    });
+                }, "image/png");
+            })
+            .catch((err) => {
+                console.error("Failed to load image icon", err);
+            });
+    }
+```
+
+้เพิ่ม Function addDataPopup
+```
+    const addDataPopup = (data: any) => {
+        if (!map.current) return;
+
+        map.current.addLayer({
+            id: data.layerId,
+            type: "symbol",
+            source: data.sourceId,
+            layout: {
+                "icon-image": data.iconId,
+                "icon-size": 0.5,
+                "icon-allow-overlap": true,
+            },
+
+        });
+
+        map.current.on("click", data.layerId, (eClick) => {
+            const feature = eClick.features?.[0];
+            if (!feature) return;
+
+            const props = feature.properties;
+            const lngLat = eClick.lngLat;
+
+            const html = setContent(props, data.layer)
+
+            new maplibregl.Popup()
+                .setLngLat(lngLat)
+                .setHTML(html)
+                .addTo(map.current!);
+        });
+
+        map.current.on("mouseenter", data.layerId, () => {
+            map.current!.getCanvas().style.cursor = "pointer";
+        });
+        map.current.on("mouseleave", data.layerId, () => {
+            map.current!.getCanvas().style.cursor = "";
+        });
+
+    }
+```
+
+เพิ่ม popup content
+```
+    const setContent = (props: any, layer: any) => {
+        var content = ""
+        if (layer == "bma_school") {
+            content = `
+            <div style="font-size: 12px;">
+                <b>ID:</b> ${props.id_sch}<br/>
+                <b>NAME:</b> ${props.name}<br/>
+                <b>Address:</b> ${props.address}<br/>
+                <b>Code:</b> ${props.dcode}<br/>
+                <b>Student Count:</b> ${props.num_stu}<br/>
+            </div>
+        `
+        }
+        return content
+    }
+
+```
+
+เพิ่มเงื่อนไขเดียวกับ bma_school ใน add layer
+
+```
+|| layer.name_en === "air_pollution" 
+```
+
+เพิ่ม popup content ของ air_pollution
+```
+else if (layer == "air_pollution") {
+            content = `
+            <div style="font-size: 12px;">
+                <b>ID:</b> ${props.id_air}<br/>
+                <b>NAME:</b> ${props.dname}<br/>
+                <b>Location:</b> ${props.location}<br/>
+                <b>Code:</b> ${props.dcode}<br/>
+            </div>
+        `
+        }
+```
+
+18. เรียกข้อมูลจาก CSV
+เพิ่ม record ใน layers
+```
+เพิ่ม record ใน layers
+```
+{
+    id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, visible: true, icon: '/assets/images/cctv.png', minzoom: 10, maxzoom: 22
+},
+```
+เพิ่ม layer styles ใน addlayerเงื่อนไขเดียวกับ bma_school และ air_pollution
+```
+layer.name_en === "bma_cctv"
+```
+
+เพิ่ม popup content ของ bma_cctv
+```
+if (layer == "bma_cctv") {
+            content = `
+            <div style="font-size: 12px;">
+                <b>ID:</b> ${props.ID}<br/>
+                <b>District:</b> ${props.District}<br/>
+                <b>Location:</b> ${props.location}<br/>
+                <b>Code DVR:</b> ${props["Code DVR"]}<br/>
+                <b>ID Camera:</b> ${props[" ID Camera"]}<br/>
+                <b>Project:</b> ${props.project}<br/>
+                <b>Lat:</b> ${props.lat}<br/>
+                <b>Long:</b> ${props.long}<br/>
+            </div>
+            `;
+
+        } 
+```
+19. เรียกข้อมูลจาก ShapeFile (zip)
+```
+{
+    id: 8, type: "shp", name_en: "bma_green_area", name: "พื้นที่สีเขียว", path: "bma_green_area.zip", geojson: null, visible: true, icon: null, minzoom: 15, maxzoom: 22
+},
+{
+    id: 9, type: "shp", name_en: "bma_building", name: "อาคาร/ตึก", path: "bma_building.zip", geojson: null, visible: true, icon: null, minzoom: 15,
+    maxzoom: 22
+},
+```
