@@ -821,7 +821,60 @@ else if (layer.name_en === "air4thai") {
             `;
         }
 ```
+20. เรียกข้อมูล Tile Service ( WMS )
 
+เพิ่ม function addAir4ThaiMarkers
+
+```
+ {
+                id: 11,
+                type: "arcgis",
+                name_en: "bma_basemap_arcgis",
+                name: "BMAGI Basemap 2564",
+                path: "",
+                geojson: null,
+                visible: false,
+                icon: null,
+                minzoom: 0,
+                maxzoom: 22,
+
+            }
+```
+
+เพิ่ม เงื่อนไข arcgis ใน function addLayer
+
+```
+if (layer.type === "arcgis") {
+            const sourceId = `${layer.name_en}_${layer.id}_source`;
+            const layerId = `${layer.name_en}_${layer.id}_layer`;
+
+            if (!mapInstance.getSource(sourceId)) {
+                mapInstance.addSource(sourceId, {
+                    type: "raster",
+                    tiles: [
+                        "https://cpudgiapp.bangkok.go.th/arcgis/rest/services/GI_Platform/BMAGI_Basemap_2564/MapServer/export" +
+                        "?bbox={bbox-epsg-3857}" +
+                        "&bboxSR=3857" +
+                        "&size=256,256" +
+                        "&format=png" +
+                        "&transparent=true" +
+                        "&f=image"
+                    ],
+                    tileSize: 256,
+                });
+            }
+
+            mapInstance.addLayer({
+                id: layerId,
+                type: "raster",
+                source: sourceId,
+                layout: {
+                    visibility: layer.visible ? "visible" : "none"
+                }
+            });
+            return;
+        }
+```
 21. เพิ่ม layer control Basemap
 ```
 <div className="layer-control" style={{ padding: "10px" }}>
@@ -1025,3 +1078,4 @@ setLoadingProgress({ loaded: index + 1, total: layers.length });
                     )}
                 </div>
 ```
+
