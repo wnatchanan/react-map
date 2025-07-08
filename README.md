@@ -3,7 +3,7 @@
 ```
 npm install maplibre-gl @types/maplibre-gl
 npm install  --save-dev papaparse @types/papaparse
-npm instasll --save-dev shpjs @types/shpjs
+npm install --save-dev shpjs @types/shpjs
 ```
 
 2. สร้าง folder components
@@ -542,8 +542,6 @@ else if (layer == "air_pollution") {
 ```
 
 18. เรียกข้อมูลจาก CSV
-เพิ่ม record ใน layers
-```
 เพิ่ม record ใน layers
 ```
 {
