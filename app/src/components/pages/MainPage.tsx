@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './MainPage.css';
-import MapView from '../MapView';
+// import MapView from '../MapView';
 
 const MainPage: React.FC = () => {
 
@@ -54,7 +54,7 @@ const MainPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-            <MapView />
+            {/* <MapView /> */}
         </>
     );
 };
