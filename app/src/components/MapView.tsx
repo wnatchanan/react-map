@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import './MapView.css';
 import webservice from '../services/webservice.service';
+// if your bundler supports CSS imports
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 const baseMapStyles = [
     {
