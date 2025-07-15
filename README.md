@@ -420,7 +420,6 @@ else if (layer.name_en === "bma_school") {
             return;
         }
 
-}
 ```
 เพิ่ม Function loadImagePopup
 ```
@@ -548,6 +547,23 @@ else if (layer == "air_pollution") {
     id: 7, type: "csv", name_en: "bma_cctv", name: "กล้อง cctv", path: "bma_cctv.csv", geojson: null, visible: true, icon: '/assets/images/cctv.png', minzoom: 10, maxzoom: 22
 },
 ```
+เพิ่ม function เรียกข้อมูลจาก CSV
+```
+else if (layer.type === "csv") {
+                    const res = await webservice.loadCSVFile(`/assets/geodata/${layer.path}`);
+                    if (res.length > 0) {
+                        geojson = {
+                            type: "FeatureCollection",
+                            features: res.map((d: any) => ({
+                                type: "Feature",
+                                geometry: { type: "Point", coordinates: [+d.long, +d.lat] },
+                                properties: d,
+                            })),
+                        };
+                    }
+
+                }
+```
 เพิ่ม layer styles ใน addlayerเงื่อนไขเดียวกับ bma_school และ air_pollution
 ```
 layer.name_en === "bma_cctv"
@@ -581,7 +597,13 @@ if (layer == "bma_cctv") {
     maxzoom: 22
 },
 ```
-
+เพิ่ม function loadShapeFile
+```
+else if (layer.type === "shp") {
+                    const res: any = await webservice.loadShapeFile(`/assets/geodata/${layer.path}`);
+                    if (res.features?.length > 0) geojson = res;
+                }
+```
 เพิ่ม layer style bma_green_area
 ```
 else if (layer.name_en === 'bma_green_area') {
@@ -655,6 +677,25 @@ else if (layer == "bma_building") {
 {
     id: 10, type: "api", name_en: "air4thai", name: "รายงานสภาพอากาศ", path: "http://air4thai.com/forweb/getAQI_JSON.php", geojson: null, visible: true, icon: '/assets/images/air.png', minzoom: 15, maxzoom: 22
 },
+```
+
+เพิ่ม function เรียกข้อมูลจาก API 
+```
+else if (layer.type === "api") {
+                    const res: any = await webservice.loadAPI(layer.path);
+
+                    if (res.data.stations.length > 0) {
+                        geojson = {
+                            type: "FeatureCollection",
+                            features: res.data.stations.map((d: any) => ({
+                                type: "Feature",
+                                geometry: { type: "Point", coordinates: [+d.long, +d.lat] },
+                                properties: d,
+                            })),
+                        };
+
+                    }
+                }
 ```
 
 เพิ่มเงื่อนไข addSource ของ air4thai
