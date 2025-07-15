@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './MainPage.css';
-// import MapView from '../MapView';
+import MapView from '../MapView';
 
 const MainPage: React.FC = () => {
 
@@ -31,7 +31,7 @@ const MainPage: React.FC = () => {
             </div>
 
             {/* Body Content */}
-            <div className="flex flex-col items-center justify-center w-full h-[90vh] bg-gray-100">
+            {/* <div className="flex flex-col items-center justify-center w-full h-[90vh] bg-gray-100">
                 <div className="flex items-center space-x-2 text-gray-800 text-xl font-medium">
                     <span>Custom Map</span>
                     <svg
@@ -45,7 +45,8 @@ const MainPage: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
-            </div>
+            </div> */}
+            <MapView />
         </>
     );
 
