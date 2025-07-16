@@ -39,6 +39,12 @@ const MapView: React.FC = () => {
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const map = useRef<maplibregl.Map | null>(null);
     const [airtype, setAirType] = useState<any>("AQI");
+    const [mapStyle, setMapStyle] = useState<any>(baseMapStyles[0].style);
+    const [selectedBasemap, setSelectedBasemap] = useState<any>("Google Hybrid");
+    const [loadingProgress, setLoadingProgress] = useState<{ loaded: number, total: number }>({
+        loaded: 0,
+        total: 0
+    });
 
     const colorPalette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
     const getColorByIndex = (i: number) => {
@@ -85,9 +91,23 @@ const MapView: React.FC = () => {
             },
             {
                 id: 10, type: "api", name_en: "air4thai", name: "รายงานสภาพอากาศ", path: "http://air4thai.com/forweb/getAQI_JSON.php", geojson: null, visible: true, icon: '/assets/images/air.png', minzoom: 15, maxzoom: 22
-            },
+            }, {
+                id: 11,
+                type: "arcgis",
+                name_en: "bma_basemap_arcgis",
+                name: "BMAGI Basemap 2564",
+                path: "",
+                geojson: null,
+                visible: true,
+                icon: null,
+                minzoom: 0,
+                maxzoom: 22,
+
+            }
         ];
         const loadedLayers: any[] = [];
+
+        setLoadingProgress({ loaded: 0, total: layers.length });
 
         for (const [index, layer] of layers.entries()) {
 
@@ -131,6 +151,8 @@ const MapView: React.FC = () => {
                 const fullLayer = { ...layer, geojson };
                 loadedLayers.push(fullLayer);
 
+                setLoadingProgress({ loaded: index + 1, total: layers.length });
+
             } catch (err) {
                 console.error(`Failed to load ${layer.name_en}:`, err);
             }
@@ -140,6 +162,37 @@ const MapView: React.FC = () => {
     };
 
     const addLayer = (layer: any, mapInstance: maplibregl.Map) => {
+        if (layer.type === "arcgis") {
+            const sourceId = `${layer.name_en}_${layer.id}_source`;
+            const layerId = `${layer.name_en}_${layer.id}_layer`;
+
+            if (!mapInstance.getSource(sourceId)) {
+                mapInstance.addSource(sourceId, {
+                    type: "raster",
+                    tiles: [
+                        "https://cpudgiapp.bangkok.go.th/arcgis/rest/services/GI_Platform/BMAGI_Basemap_2564/MapServer/export" +
+                        "?bbox={bbox-epsg-3857}" +
+                        "&bboxSR=3857" +
+                        "&size=256,256" +
+                        "&format=png" +
+                        "&transparent=true" +
+                        "&f=image"
+                    ],
+                    tileSize: 256,
+                });
+            }
+
+            mapInstance.addLayer({
+                id: layerId,
+                type: "raster",
+                source: sourceId,
+                layout: {
+                    visibility: layer.visible ? "visible" : "none"
+                }
+            });
+            return;
+        }
+
         if (!layer.geojson) return;
 
         const sourceId = `${layer.name_en}_${layer.id}_source`;
@@ -521,6 +574,47 @@ const MapView: React.FC = () => {
                 <b>longitude:</b> ${props.longitude}<br/>
             </div>
         `
+        } else if (layer == "air4thai") {
+            let AQILast: any = props.AQILast
+            content = `
+              <div style="font-family: sans-serif; font-size: 12px; line-height: 1.4;">
+                <strong style="font-size: 14px;">รายงานสภาพอากาศ</strong>
+                <table style="border-collapse: collapse; margin-top: 8px;">
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">ID:</td>
+                    <td style="padding: 4px 8px;">${props.stationID}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Type:</td>
+                    <td style="padding: 4px 8px;">${props.stationType}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Name:</td>
+                    <td style="padding: 4px 8px;">${props.nameTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Area:</td>
+                    <td style="padding: 4px 8px;">${props.areaTH}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Latitude:</td>
+                    <td style="padding: 4px 8px;">${props.lat}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">Longitude:</td>
+                    <td style="padding: 4px 8px;">${props.long}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">วันที่:</td>
+                    <td style="padding: 4px 8px;">${AQILast.date}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 8px; font-weight: bold;">เวลา:</td>
+                    <td style="padding: 4px 8px;">${AQILast.time}</td>
+                  </tr>
+                </table>
+              </div>
+            `;
         }
         return content
     }
@@ -548,13 +642,184 @@ const MapView: React.FC = () => {
         // return () => mapInstance.remove();
     }, []);
 
+    const handleBasemapChange = (basemapName: string) => {
+        if (!map.current) return;
+
+        const basemap: any = baseMapStyles.find(b => b.name === basemapName);
+        if (!basemap?.style) return;
+
+        setSelectedBasemap(basemapName);
+        setMapStyle(basemap.style);
+        map.current.setStyle(basemap.style);
+        map.current.once('idle', async () => {
+            await cachedIcon();
+            GISData.forEach(layer => {
+                if (layer.geojson || layer.type === 'arcgis') {
+                    addLayer(layer, map.current!);
+                }
+            });;
+        });
+    };
+
+    async function cachedIcon() {
+        if (!map.current) return;
+
+        await Promise.all(
+            Object.entries(loadedImages.current).map(([id, url]) =>
+                new Promise<void>((resolve, reject) => {
+                    if (map.current!.hasImage(id)) return resolve();          // sprite already has it
+
+                    map.current!.loadImage(url)
+                        .then(img => {
+                            map.current!.addImage(id, img.data as ImageBitmap, { pixelRatio: 1 });
+                            resolve();
+                        })
+                        .catch(reject);
+                }),
+            ),
+        );
+    }
+
+    const toggleLayerVisibility = (layerId: number) => {
+        setGISData((prev) =>
+            prev.map((layer) => {
+                if (layer.id === layerId) {
+                    const newVisible = !layer.visible;
+
+                    if (layer.name_en === "air4thai") {
+                        if (newVisible) {
+                            showAir4ThaiMarkers(layer);
+                        } else {
+                            hideAir4ThaiMarkers();
+                        }
+                    } else {
+                        const mapLayerId = `${layer.name_en}_${layer.id}_layer`;
+                        if (map.current?.getLayer(mapLayerId)) {
+                            map.current.setLayoutProperty(
+                                mapLayerId,
+                                "visibility",
+                                newVisible ? "visible" : "none"
+                            );
+                        }
+                    }
+
+                    return { ...layer, visible: newVisible };
+                }
+                return layer;
+            })
+        );
+    };
+
+    const showAir4ThaiMarkers = (layer: any) => {
+        addAir4ThaiMarkers(layer);
+    };
+
+    const hideAir4ThaiMarkers = () => {
+        air4thaiMarkersRef.current.forEach(marker => marker.remove());
+        air4thaiMarkersRef.current = [];
+    };
+
+    const handleAirTypeChange = (type: string) => {
+        setAirType(type);
+        refreshAir4ThaiLayer(type);
+    };
+
+    const refreshAir4ThaiLayer = (type: string) => {
+        const layer = GISData.find(l => l.name_en === "air4thai");
+        if (!layer || !layer.visible) return;
+        air4thaiMarkersRef.current.forEach(marker => marker.remove());
+        air4thaiMarkersRef.current = [];
+
+        addAir4ThaiMarkers(layer, type);
+    };
+
     return (
         <div className="map-view-wrapper" style={{ display: "flex" }}>
             <div
                 ref={mapContainer}
                 style={{ width: "100%", height: "100vh" }}
-            ></div>
+            >
+                <div className="map-overlay" style={{ padding: "10px" }}>
+                    <label style={{ fontWeight: 'bold', fontSize: '1.2em' }}>Basemap:</label>
+                    <select
+                        value={selectedBasemap}
+                        onChange={(e) => handleBasemapChange(e.target.value)}
+                    >
+                        {baseMapStyles.map((b) => (
+                            <option key={b.name} value={b.name}>
+                                {b.name}
+                            </option>
+                        ))}
+                    </select>
+                    <div style={{ marginTop: 10 }}>
+                        <label style={{ fontWeight: 'bold', fontSize: '1.2em' }}>ชั้นข้อมูล:</label>
+                        <div>
+                            {GISData.map((layer) => (
+                                <div key={layer.id}>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={layer.visible}
+                                            onChange={() => toggleLayerVisibility(layer.id)}
+                                        />
+                                        {layer.name}
+                                    </label>
+                                    {layer.name_en == "air4thai" && (
+                                        <select
+                                            value={airtype}
+                                            onChange={(e) => {
+                                                const newAirType = e.target.value;
+                                                handleAirTypeChange(newAirType)
+                                            }}
+                                        >
+                                            {AirTypeList.map((item) => (
+                                                <option key={item} value={item}>
+                                                    {item}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        {loadingProgress.loaded < loadingProgress.total && (
+                            <>
+                                <div
+                                    style={{
+                                        background: 'linear-gradient(90deg, #ff6a00, #ffd800, #21d4fd, #b721ff, #ff6a00)',
+                                        backgroundSize: '200% 100%',
+                                        WebkitBackgroundClip: "text",
+                                        WebkitTextFillColor: "transparent",
+                                        backgroundClip: "text",
+                                        color: "transparent",
+                                        fontWeight: "bold",
+                                        fontSize: "1.1em",
+                                        animation: "gradientTextMove 2s linear infinite"
+                                    }}
+                                >
+                                    Loading GIS Data… {loadingProgress.loaded} / {loadingProgress.total}
+                                </div>
+                                <style>
+                                    {`
+                                        @keyframes gradientTextMove {
+                                            0% { background-position: 0% 50%; }
+                                            100% { background-position: 100% 50%; }
+                                        }
+                                    `}
+                                </style>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+
+
         </div>
+
     )
 };
 
